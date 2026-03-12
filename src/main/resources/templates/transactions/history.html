@@ -1,0 +1,372 @@
+<!doctype html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/main}"
+>
+  <head>
+    <title>Lịch sử giao dịch - Digital Market</title>
+  </head>
+  <body>
+    <div layout:fragment="content">
+      <h2 class="mb-4">
+        <i class="bi bi-clock-history me-2"></i>Lịch sử giao dịch
+      </h2>
+
+      <!-- Tabs -->
+      <ul class="nav nav-tabs mb-4" id="historyTabs">
+        <li class="nav-item">
+          <a class="nav-link active" data-bs-toggle="tab" href="#purchases">
+            <i class="bi bi-bag me-1"></i>Đơn mua
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" data-bs-toggle="tab" href="#sales">
+            <i class="bi bi-shop me-1"></i>Đơn bán
+          </a>
+        </li>
+      </ul>
+
+      <div class="tab-content">
+        <!-- Purchases Tab -->
+        <div class="tab-pane fade show active" id="purchases">
+          <div class="card">
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Mã GD</th>
+                      <th>Sản phẩm</th>
+                      <th>Số tiền</th>
+                      <th>Trạng thái</th>
+                      <th>Ngày</th>
+                      <th>Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody id="purchaseRows">
+                    <tr>
+                      <td colspan="6" class="text-center py-4 text-muted">
+                        <i class="bi bi-inbox display-6"></i>
+                        <p class="mb-0 mt-2">Chưa có đơn mua nào</p>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sales Tab -->
+        <div class="tab-pane fade" id="sales">
+          <div class="card">
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Mã GD</th>
+                      <th>Sản phẩm</th>
+                      <th>Người mua</th>
+                      <th>Số tiền</th>
+                      <th>Trạng thái</th>
+                      <th>Ngày</th>
+                    </tr>
+                  </thead>
+                  <tbody id="salesRows">
+                    <tr>
+                      <td colspan="6" class="text-center py-4 text-muted">
+                        <i class="bi bi-inbox display-6"></i>
+                        <p class="mb-0 mt-2">Chưa có đơn bán nào</p>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dispute Modal -->
+      <div class="modal fade" id="disputeModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+              <h5 class="modal-title">
+                <i class="bi bi-exclamation-triangle me-2"></i>Mở khiếu nại
+              </h5>
+              <button
+                type="button"
+                class="btn-close btn-close-white"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" id="disputeTransactionId" />
+              <div class="alert alert-warning">
+                <small
+                  >Khiếu nại sẽ tạm giữ giao dịch cho đến khi được giải quyết.
+                  Nếu cần Admin can thiệp, cả 2 bên sẽ bị thu phí 50,000
+                  VND.</small
+                >
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Lý do khiếu nại</label>
+                <textarea
+                  id="disputeReason"
+                  class="form-control"
+                  rows="4"
+                  required
+                  placeholder="Mô tả chi tiết vấn đề bạn gặp phải..."
+                ></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                class="btn btn-danger"
+                onclick="submitDispute()"
+              >
+                Gửi khiếu nại
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction Detail Modal -->
+      <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">
+                <i class="bi bi-info-circle me-2"></i>Chi tiết đơn hàng
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="fw-bold">Sản phẩm:</label>
+                <p id="detailTopic" class="mb-1">---</p>
+              </div>
+              <div class="mb-3">
+                <label class="fw-bold">Mô tả:</label>
+                <p id="detailDesc" class="text-muted small">---</p>
+              </div>
+
+              <div
+                class="alert alert-success"
+                id="detailHiddenSection"
+                style="display: none"
+              >
+                <h5>
+                  <i class="bi bi-unlock me-2"></i>Nội dung / Tài khoản đã mua
+                </h5>
+                <div
+                  id="detailHiddenContent"
+                  class="bg-white p-3 rounded border mt-2 text-break fw-bold text-dark"
+                >
+                  Loading...
+                </div>
+                <small class="text-muted mt-2 d-block"
+                  >Hãy lưu lại thông tin này ngay. Nếu có vấn đề, hãy khiếu
+                  nại.</small
+                >
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <label class="fw-bold">Mã giao dịch:</label>
+                  <p id="detailCode">---</p>
+                </div>
+                <div class="col-md-6">
+                  <label class="fw-bold">Giá tiền:</label>
+                  <p id="detailPrice">---</p>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div layout:fragment="scripts">
+      <script>
+        $(document).ready(function () {
+          loadPurchases();
+          loadSales();
+        });
+
+        function loadPurchases() {
+          $.get("/api/transactions?role=BUYER", function (list) {
+            if (list.length === 0) return;
+
+            let html = "";
+            list.forEach((tx) => {
+              const statusBadge = getStatusBadge(tx.status);
+              const actions = getActions(tx);
+              const totalAmount =
+                typeof tx.totalAmount === "object"
+                  ? parseFloat(tx.totalAmount)
+                  : parseFloat(tx.totalAmount);
+
+              html += `
+                            <tr>
+                                <td><code>${tx.transactionCode?.substring(0, 8) || tx.id}...</code></td>
+                                <td>${tx.product?.topic || "N/A"}</td>
+                                <td><strong>${formatVND(totalAmount)}</strong> VND</td>
+                                <td>${statusBadge}</td>
+                                <td>${new Date(tx.createdAt).toLocaleDateString("vi-VN")}</td>
+                                <td>${actions}</td>
+                            </tr>
+                        `;
+            });
+            $("#purchaseRows").html(html);
+          });
+        }
+
+        function loadSales() {
+          $.get("/api/transactions?role=SELLER", function (list) {
+            if (list.length === 0) return;
+
+            let html = "";
+            list.forEach((tx) => {
+              const statusBadge = getStatusBadge(tx.status);
+              const price =
+                typeof tx.price === "object"
+                  ? parseFloat(tx.price)
+                  : parseFloat(tx.price);
+
+              html += `
+                            <tr>
+                                <td><code>${tx.transactionCode?.substring(0, 8) || tx.id}...</code></td>
+                                <td>${tx.product?.topic || "N/A"}</td>
+                                <td>${tx.buyer?.username || "N/A"}</td>
+                                <td><strong>${formatVND(price)}</strong> VND</td>
+                                <td>${statusBadge}</td>
+                                <td>${new Date(tx.createdAt).toLocaleDateString("vi-VN")}</td>
+                            </tr>
+                        `;
+            });
+            $("#salesRows").html(html);
+          });
+        }
+
+        function getStatusBadge(status) {
+          const badges = {
+            PENDING_PAYMENT:
+              '<span class="badge bg-warning">Chờ thanh toán</span>',
+            PAID: '<span class="badge bg-info">Đã thanh toán</span>',
+            COMPLETED: '<span class="badge bg-success">Hoàn thành</span>',
+            DISPUTED: '<span class="badge bg-danger">Khiếu nại</span>',
+            REFUNDED: '<span class="badge bg-secondary">Hoàn tiền</span>',
+            CANCELLED: '<span class="badge bg-dark">Đã hủy</span>',
+          };
+          return (
+            badges[status] ||
+            '<span class="badge bg-secondary">' + status + "</span>"
+          );
+        }
+
+        function getActions(tx) {
+          let buttons = `
+              <button class="btn btn-primary btn-sm me-1" onclick="viewDetails('${tx.id}', '${tx.product?.id}', '${tx.product?.topic?.replace(/'/g, "\\'")}', '${tx.product?.description?.replace(/'/g, "\\'")}', '${tx.totalAmount}', '${tx.transactionCode}')">
+                  <i class="bi bi-eye"></i> Xem
+              </button>
+          `;
+
+          if (tx.status === "PAID") {
+            buttons += `
+                        <button class="btn btn-success btn-sm me-1" onclick="confirmReceived(${tx.id})">
+                            <i class="bi bi-check"></i>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="openDispute(${tx.id})">
+                            <i class="bi bi-flag"></i>
+                        </button>
+                    `;
+          }
+          return buttons;
+        }
+
+        function confirmReceived(txId) {
+          if (!confirm("Xác nhận bạn đã nhận được sản phẩm?")) return;
+
+          $.post("/api/transactions/" + txId + "/confirm", function () {
+            showToast("Xác nhận thành công!", "success");
+            loadPurchases();
+          }).fail(function () {
+            showToast("Có lỗi xảy ra", "error");
+          });
+        }
+
+        function openDispute(txId) {
+          $("#disputeTransactionId").val(txId);
+          new bootstrap.Modal(document.getElementById("disputeModal")).show();
+        }
+
+        function submitDispute() {
+          const txId = $("#disputeTransactionId").val();
+          const reason = $("#disputeReason").val();
+
+          $.post(
+            "/api/disputes/create",
+            { transactionId: txId, reason: reason },
+            function () {
+              showToast("Đã gửi khiếu nại", "success");
+              bootstrap.Modal.getInstance(
+                document.getElementById("disputeModal"),
+              ).hide();
+              loadPurchases();
+            },
+          ).fail(function () {
+            showToast("Có lỗi xảy ra", "error");
+          });
+        }
+
+        function viewDetails(txId, productId, topic, desc, price, code) {
+          $("#detailTopic").text(topic);
+          $("#detailDesc").text(desc || "Không có mô tả");
+          $("#detailPrice").text(formatVND(parseFloat(price)) + " VND");
+          $("#detailCode").text(code);
+
+          $("#detailHiddenSection").hide();
+          $("#detailHiddenContent").text("Đang tải...");
+
+          $.get("/api/products/" + productId + "/hidden", function (content) {
+            $("#detailHiddenContent").text(content);
+            $("#detailHiddenSection").show();
+          }).fail(function () {
+            // If 403 or error, it means logic prevented view (e.g. not buyer or not paid),
+            // but for "Purchases" tab we normally expect access if it's in the list
+            // and access logic (modified in Step 3) allows it.
+            console.log("Cannot fetch hidden content");
+          });
+
+          new bootstrap.Modal(document.getElementById("detailModal")).show();
+        }
+      </script>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,88 @@
+<!doctype html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/main}"
+>
+  <head>
+    <title>Login - Digital Market</title>
+  </head>
+  <body>
+    <div layout:fragment="content">
+      <div class="row justify-content-center">
+        <div class="col-md-5">
+          <div class="card">
+            <div class="card-body p-4">
+              <h3 class="card-title text-center mb-4">
+                <i class="bi bi-person-circle me-2 text-primary"></i>Đăng nhập
+              </h3>
+
+              <!-- Error Message -->
+              <div th:if="${error}" class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <span th:text="${error}">Sai tên đăng nhập hoặc mật khẩu</span>
+              </div>
+
+              <!-- Success Message -->
+              <div th:if="${message}" class="alert alert-success" role="alert">
+                <i class="bi bi-check-circle me-2"></i>
+                <span th:text="${message}">Message</span>
+              </div>
+
+              <form th:action="@{/login}" method="post">
+                <div class="mb-3">
+                  <label for="username" class="form-label">Tên đăng nhập</label>
+                  <div class="input-group">
+                    <span class="input-group-text"
+                      ><i class="bi bi-person"></i
+                    ></span>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="username"
+                      name="username"
+                      placeholder="Nhập tên đăng nhập"
+                      required
+                      autofocus
+                    />
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="password" class="form-label">Mật khẩu</label>
+                  <div class="input-group">
+                    <span class="input-group-text"
+                      ><i class="bi bi-lock"></i
+                    ></span>
+                    <input
+                      type="password"
+                      class="form-control"
+                      id="password"
+                      name="password"
+                      placeholder="Nhập mật khẩu"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div class="d-grid gap-2 mb-3">
+                  <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
+                  </button>
+                </div>
+              </form>
+
+              <hr />
+              <p class="text-center mb-0">
+                Chưa có tài khoản?
+                <a th:href="@{/register}" class="text-decoration-none fw-bold"
+                  >Đăng ký ngay</a
+                >
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

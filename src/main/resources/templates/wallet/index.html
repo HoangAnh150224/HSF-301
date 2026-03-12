@@ -1,0 +1,196 @@
+<!doctype html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+  layout:decorate="~{layout/main}"
+>
+  <head>
+    <title>Vi tien - Digital Market</title>
+  </head>
+  <body>
+    <div layout:fragment="content">
+      <h2 class="mb-4"><i class="bi bi-wallet2 me-2"></i>Vi cua toi</h2>
+
+      <!-- Success/Error Messages -->
+      <div id="payosAlert" style="display:none;" class="alert fade-in"></div>
+      <div th:if="${param.payos != null && param.payos[0] == 'cancel'}" class="alert alert-warning fade-in">
+        <i class="bi bi-exclamation-circle me-2"></i>Ban da huy thanh toan.
+      </div>
+
+      <div class="row g-4">
+        <!-- Balance Card -->
+        <div class="col-md-6">
+          <div class="card balance-card">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <p class="mb-1 opacity-75">So du kha dung</p>
+                  <h2 class="display-5 fw-bold mb-0" id="balance">0</h2>
+                  <p class="mb-0">VND</p>
+                </div>
+                <i class="bi bi-wallet-fill display-4 opacity-50"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deposit Card -->
+        <div class="col-md-6">
+          <div class="card h-100">
+            <div class="card-header">
+              <h5 class="mb-0">
+                <i class="bi bi-plus-circle me-2"></i>Nap tien qua PayOS
+              </h5>
+            </div>
+            <div class="card-body">
+              <form id="depositForm">
+                <div class="mb-3">
+                  <label class="form-label">So tien (VND)</label>
+                  <input
+                    type="number"
+                    id="depositAmount"
+                    class="form-control form-control-lg"
+                    placeholder="Nhap so tien"
+                    min="10000"
+                    step="10000"
+                    required
+                  />
+                  <div class="form-text">Toi thieu 10,000 VND</div>
+                </div>
+
+                <div class="d-flex gap-2 mb-3">
+                  <button type="button" class="btn btn-outline-secondary flex-fill" onclick="setAmount(50000)">50K</button>
+                  <button type="button" class="btn btn-outline-secondary flex-fill" onclick="setAmount(100000)">100K</button>
+                  <button type="button" class="btn btn-outline-secondary flex-fill" onclick="setAmount(200000)">200K</button>
+                  <button type="button" class="btn btn-outline-secondary flex-fill" onclick="setAmount(500000)">500K</button>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 btn-lg">
+                  <i class="bi bi-credit-card me-2"></i>Thanh toan voi PayOS
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction History -->
+      <div class="card mt-4">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="bi bi-clock-history me-2"></i>Lich su giao dich vi
+          </h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Ma GD</th>
+                  <th>Loai</th>
+                  <th>So tien</th>
+                  <th>Trang thai</th>
+                  <th>Thoi gian</th>
+                </tr>
+              </thead>
+              <tbody id="transactionHistory">
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-4">
+                    <i class="bi bi-inbox display-6"></i>
+                    <p class="mb-0 mt-2">Chua co giao dich nao</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div layout:fragment="scripts">
+      <script>
+        $(document).ready(function () {
+          // Check if returning from PayOS payment
+          const urlParams = new URLSearchParams(window.location.search);
+          const payos = urlParams.get('payos');
+          const orderCode = urlParams.get('orderCode');
+
+          if (payos === 'success' && orderCode) {
+            confirmPayOSPayment(orderCode);
+          } else {
+            loadBalance();
+          }
+        });
+
+        function confirmPayOSPayment(orderCode) {
+          const alertDiv = $('#payosAlert');
+          alertDiv.removeClass('alert-success alert-danger')
+            .addClass('alert-info')
+            .html('<i class="bi bi-hourglass-split me-2"></i>Dang xac nhan thanh toan...')
+            .show();
+
+          $.get("/api/wallet/payos-confirm", { orderCode: orderCode }, function (response) {
+            if (response.success) {
+              alertDiv.removeClass('alert-info')
+                .addClass('alert-success')
+                .html('<i class="bi bi-check-circle me-2"></i>Nap tien thanh cong! So du da duoc cap nhat.');
+            } else {
+              alertDiv.removeClass('alert-info')
+                .addClass('alert-warning')
+                .html('<i class="bi bi-exclamation-circle me-2"></i>Thanh toan chua duoc xac nhan. Vui long doi hoac lien he ho tro.');
+            }
+            loadBalance();
+          }).fail(function () {
+            alertDiv.removeClass('alert-info')
+              .addClass('alert-danger')
+              .html('<i class="bi bi-x-circle me-2"></i>Khong the xac nhan thanh toan. Vui long thu lai sau.');
+            loadBalance();
+          });
+        }
+
+        function loadBalance() {
+          $.get("/api/wallet/balance", function (wallet) {
+            const balance = typeof wallet.balance === 'object' ? parseFloat(wallet.balance) : parseFloat(wallet.balance);
+            $("#balance").text(formatVND(balance));
+            $("#navBalance").text(formatVND(balance));
+          }).fail(function () {
+            $("#balance").text("--");
+          });
+        }
+
+        function setAmount(amount) {
+          $("#depositAmount").val(amount);
+        }
+
+        $("#depositForm").submit(function (e) {
+          e.preventDefault();
+          const amount = $("#depositAmount").val();
+
+          if (amount < 10000) {
+            showToast("So tien toi thieu la 10,000 VND", "error");
+            return;
+          }
+
+          $(this)
+            .find('button[type="submit"]')
+            .prop("disabled", true)
+            .html('<i class="bi bi-hourglass-split me-2"></i>Dang xu ly...');
+
+          $.post(
+            "/api/wallet/deposit",
+            { amount: amount },
+            function (response) {
+              window.location.href = response.paymentUrl;
+            },
+          ).fail(function (xhr) {
+            showToast("Co loi xay ra. Vui long thu lai.", "error");
+            $('#depositForm button[type="submit"]')
+              .prop("disabled", false)
+              .html('<i class="bi bi-credit-card me-2"></i>Thanh toan voi PayOS');
+          });
+        });
+      </script>
+    </div>
+  </body>
+</html>

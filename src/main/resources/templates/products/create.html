@@ -1,0 +1,241 @@
+<!doctype html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/main}"
+>
+  <head>
+    <title>Đăng bán - Digital Market</title>
+  </head>
+  <body>
+    <div layout:fragment="content">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-header bg-white py-3">
+              <h4 class="mb-0">
+                <i class="bi bi-plus-circle me-2"></i>Đăng bán sản phẩm
+              </h4>
+            </div>
+            <div class="card-body p-4">
+              <!-- Fee Warning -->
+              <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Lưu ý:</strong> Phí đăng bài là
+                <strong>5,000 VND</strong> sẽ được trừ từ ví của bạn.
+              </div>
+
+              <form id="createProductForm">
+                <div class="mb-4">
+                  <label class="form-label fw-bold"
+                    >Tiêu đề sản phẩm <span class="text-danger">*</span></label
+                  >
+                  <input
+                    type="text"
+                    id="topic"
+                    class="form-control form-control-lg"
+                    placeholder="VD: Tài khoản Netflix Premium 1 năm"
+                    required
+                    maxlength="200"
+                  />
+                  <div class="form-text">Tối đa 200 ký tự</div>
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label fw-bold"
+                    >Mô tả sản phẩm <span class="text-danger">*</span></label
+                  >
+                  <textarea
+                    id="description"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Mô tả chi tiết sản phẩm của bạn..."
+                    required
+                  ></textarea>
+                  <div class="form-text">
+                    Nội dung này sẽ hiển thị công khai cho người mua
+                  </div>
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label fw-bold">
+                    <i class="bi bi-lock me-1"></i>Nội dung ẩn
+                    <span class="text-danger">*</span>
+                  </label>
+                  <textarea
+                    id="hiddenContent"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Link download, mật khẩu, thông tin tài khoản..."
+                    required
+                  ></textarea>
+                  <div class="form-text text-info">
+                    <i class="bi bi-shield-check me-1"></i>
+                    Nội dung này chỉ hiển thị cho người mua sau khi thanh toán
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold"
+                      >Giá bán (VND) <span class="text-danger">*</span></label
+                    >
+                    <div class="input-group input-group-lg">
+                      <input
+                        type="number"
+                        id="price"
+                        class="form-control"
+                        placeholder="100000"
+                        min="1000"
+                        required
+                      />
+                      <span class="input-group-text">VND</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold"
+                      >Ai chịu phí giao dịch?</label
+                    >
+                    <select id="feeBearer" class="form-select form-select-lg">
+                      <option value="SELLER">Người bán (Bạn nhận 95%)</option>
+                      <option value="BUYER">Người mua (Bạn nhận 100%)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold">Chế độ hiển thị</label>
+                    <select id="visibility" class="form-select">
+                      <option value="PUBLIC">
+                        Công khai (Mọi người đều thấy)
+                      </option>
+                      <option value="PRIVATE">
+                        Riêng tư (Chỉ người có link mới thấy)
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold"
+                      >Thông tin liên hệ (Tùy chọn)</label
+                    >
+                    <input
+                      type="text"
+                      id="contactMethod"
+                      class="form-control"
+                      placeholder="Email, SĐT hoặc Telegram..."
+                    />
+                  </div>
+                </div>
+
+                <!-- Preview -->
+                <div class="bg-light rounded p-3 mb-4">
+                  <h6 class="mb-3">
+                    <i class="bi bi-calculator me-2"></i>Dự tính thu nhập
+                  </h6>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Giá bán:</span>
+                    <span id="previewPrice">0 VND</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Phí giao dịch (5%):</span>
+                    <span id="previewFee">0 VND</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Phí đăng bài:</span>
+                    <span>-5,000 VND</span>
+                  </div>
+                  <hr />
+                  <div
+                    class="d-flex justify-content-between fw-bold text-success"
+                  >
+                    <span>Bạn nhận được:</span>
+                    <span id="previewNet">0 VND</span>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  class="btn btn-success btn-lg w-100"
+                  id="submitBtn"
+                >
+                  <i class="bi bi-check-circle me-2"></i>Đăng sản phẩm (Trừ
+                  5,000 VND)
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div layout:fragment="scripts">
+      <script>
+        $("#price, #feeBearer").on("input change", function () {
+          updatePreview();
+        });
+
+        function updatePreview() {
+          const price = parseFloat($("#price").val()) || 0;
+          const feeBearer = $("#feeBearer").val();
+          const fee = price * 0.05;
+          const postingFee = 5000;
+
+          let net;
+          if (feeBearer === "SELLER") {
+            net = price - fee - postingFee;
+            $("#previewFee").text("-" + formatVND(fee) + " VND");
+          } else {
+            net = price - postingFee;
+            $("#previewFee").text("0 VND (Người mua chịu)");
+          }
+
+          $("#previewPrice").text(formatVND(price) + " VND");
+          $("#previewNet").text(formatVND(Math.max(0, net)) + " VND");
+        }
+
+        $("#createProductForm").submit(function (e) {
+          e.preventDefault();
+
+          const data = {
+            topic: $("#topic").val(),
+            description: $("#description").val(),
+            hiddenContent: $("#hiddenContent").val(),
+            price: $("#price").val(),
+            feeBearer: $("#feeBearer").val(),
+            visibility: $("#visibility").val(),
+            contactMethod: $("#contactMethod").val(),
+          };
+
+          $("#submitBtn")
+            .prop("disabled", true)
+            .html('<i class="bi bi-hourglass-split me-2"></i>Đang xử lý...');
+
+          $.ajax({
+            url: "/api/products",
+            method: "POST",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function (product) {
+              showToast("Đăng sản phẩm thành công!", "success");
+              setTimeout(() => {
+                window.location.href = "/products/" + product.id;
+              }, 1500);
+            },
+            error: function (xhr) {
+              showToast(
+                xhr.responseText || "Có lỗi xảy ra. Kiểm tra số dư ví.",
+                "error",
+              );
+              $("#submitBtn")
+                .prop("disabled", false)
+                .html(
+                  '<i class="bi bi-check-circle me-2"></i>Đăng sản phẩm (Trừ 5,000 VND)',
+                );
+            },
+          });
+        });
+      </script>
+    </div>
+  </body>
+</html>

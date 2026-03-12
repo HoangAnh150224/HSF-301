@@ -1,0 +1,338 @@
+<!doctype html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+  layout:decorate="~{layout/main}"
+>
+  <head>
+    <title>Chi tiết sản phẩm - Digital Market</title>
+  </head>
+  <body>
+    <div layout:fragment="content">
+      <div class="row g-4">
+        <!-- Product Info -->
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-body p-4">
+              <div
+                class="d-flex justify-content-between align-items-start mb-3"
+              >
+                <span class="badge bg-success" id="productStatus"
+                  >Loading...</span
+                >
+                <small class="text-muted" id="productCode">#---</small>
+              </div>
+
+              <h2 class="mb-3" id="productTopic">Đang tải...</h2>
+
+              <div class="mb-3">
+                <a
+                  id="editBtn"
+                  class="btn btn-outline-primary btn-sm"
+                  style="display: none"
+                  href="#"
+                >
+                  <i class="bi bi-pencil me-1"></i>Sửa
+                </a>
+                <button
+                  class="btn btn-outline-secondary btn-sm"
+                  onclick="copyLink()"
+                >
+                  <i class="bi bi-share me-1"></i>Chia sẻ
+                </button>
+                <button
+                  id="viewHiddenBtn"
+                  class="btn btn-outline-warning btn-sm"
+                  style="display: none"
+                  onclick="toggleHidden()"
+                >
+                  <i class="bi bi-eye-slash me-1"></i>Xem nội dung ẩn
+                </button>
+              </div>
+
+              <div class="mb-4">
+                <h5 class="text-muted mb-2">Mô tả sản phẩm</h5>
+                <p id="productDescription" class="mb-0">---</p>
+              </div>
+
+              <!-- Hidden Content (shown via button) -->
+              <div
+                id="hiddenContentSection"
+                class="alert alert-success"
+                style="display: none"
+              >
+                <h5><i class="bi bi-unlock me-2"></i>Nội dung ẩn</h5>
+                <div
+                  id="hiddenContent"
+                  class="bg-white p-3 rounded border mt-2 text-break"
+                ></div>
+              </div>
+
+              <hr />
+
+              <div class="row">
+                <div class="col-md-6">
+                  <p class="mb-1 text-muted">Người bán</p>
+                  <p class="fw-bold" id="sellerName">---</p>
+                </div>
+                <div class="col-md-6">
+                  <p class="mb-1 text-muted">Ngày đăng</p>
+                  <p class="fw-bold" id="createdAt">---</p>
+                </div>
+              </div>
+              <div class="row mt-3">
+                <div class="col-md-6">
+                  <p class="mb-1 text-muted">Liên hệ</p>
+                  <p class="fw-bold" id="contactMethod">---</p>
+                </div>
+                <div class="col-md-6">
+                  <p class="mb-1 text-muted">Cập nhật lần cuối</p>
+                  <p class="fw-bold" id="updatedAt">---</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Purchase Card -->
+        <div class="col-lg-4">
+          <div class="card sticky-top" style="top: 100px">
+            <div class="card-body p-4">
+              <div class="text-center mb-4">
+                <p class="text-muted mb-1">Giá sản phẩm</p>
+                <h2
+                  class="display-5 text-primary fw-bold mb-0"
+                  id="productPrice"
+                >
+                  0
+                </h2>
+                <p class="text-muted">VND</p>
+              </div>
+
+              <div class="bg-light rounded p-3 mb-4">
+                <div class="d-flex justify-content-between mb-2">
+                  <span>Giá gốc</span>
+                  <span id="basePrice">0 VND</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2" id="feeRow">
+                  <span>Phí giao dịch (5%)</span>
+                  <span id="feeAmount">0 VND</span>
+                </div>
+                <hr />
+                <div class="d-flex justify-content-between fw-bold">
+                  <span>Tổng thanh toán</span>
+                  <span class="text-primary" id="totalAmount">0 VND</span>
+                </div>
+              </div>
+
+              <div sec:authorize="isAuthenticated()">
+                <button
+                  id="buyBtn"
+                  class="btn btn-success btn-lg w-100"
+                  onclick="openBuyModal()"
+                >
+                  <i class="bi bi-cart-plus me-2"></i>Mua ngay
+                </button>
+              </div>
+
+              <div sec:authorize="!isAuthenticated()">
+                <a href="/login" class="btn btn-primary btn-lg w-100">
+                  <i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập để mua
+                </a>
+              </div>
+
+              <p class="text-center text-muted small mt-3 mb-0">
+                <i class="bi bi-shield-check me-1"></i>Được bảo vệ bởi hệ thống
+                trung gian
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Buy Confirmation Modal -->
+      <div class="modal fade" id="buyModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">
+                <i class="bi bi-cart-check me-2"></i>Xác nhận mua hàng
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                Tiền sẽ được tạm giữ cho đến khi bạn xác nhận nhận hàng hoặc sau
+                3 ngày.
+              </div>
+
+              <p class="mb-2">
+                Sản phẩm: <strong id="modalProductName">---</strong>
+              </p>
+              <p class="mb-2">
+                Tổng thanh toán:
+                <strong class="text-primary" id="modalTotal">0 VND</strong>
+              </p>
+              <p class="mb-0">
+                Số dư ví: <strong id="modalBalance">0 VND</strong>
+              </p>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                class="btn btn-success"
+                id="confirmBuyBtn"
+                onclick="confirmBuy()"
+              >
+                <i class="bi bi-check-lg me-2"></i>Xác nhận mua
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div layout:fragment="scripts">
+      <script th:inline="javascript">
+        const productId = [[${productId}]]; // Get ID from model
+        const currentUserId = [[${#authentication.principal != 'anonymousUser' ? #authentication.principal.id : null}]];
+        let product = null;
+
+        $(document).ready(function() {
+            loadProduct();
+        });
+
+        function loadProduct() {
+            $.get('/api/products/' + productId, function(p) {
+                product = p;
+                $('#productStatus').text(p.status);
+                $('#productCode').text('#' + (p.intermediaryCode || p.id));
+                $('#productTopic').text(p.topic);
+                $('#productDescription').text(p.description);
+                $('#productPrice').text(formatVND(p.price));
+                $('#basePrice').text(formatVND(p.price) + ' VND');
+                $('#sellerName').text(p.seller?.username || 'Unknown');
+                $('#createdAt').text(new Date(p.createdAt).toLocaleDateString('vi-VN'));
+                $('#updatedAt').text(new Date(p.updatedAt).toLocaleDateString('vi-VN'));
+                $('#contactMethod').text(p.contactMethod || 'Không có');
+
+                // Calculate fee
+                const fee = p.feeBearer === 'BUYER' ? p.price * 0.05 : 0;
+                const total = parseFloat(p.price) + fee;
+
+                if (fee === 0) {
+                    $('#feeRow').hide();
+                } else {
+                    $('#feeAmount').text(formatVND(fee) + ' VND');
+                }
+                $('#totalAmount').text(formatVND(total) + ' VND');
+
+                // Owner Logic
+                if (currentUserId && p.seller && currentUserId === p.seller.id) {
+                    $('#buyBtn').prop('disabled', true).text('Đây là sản phẩm của bạn');
+                    $('#viewHiddenBtn').show();
+
+                    // Use intermediaryCode if available, else id
+                    $('#editBtn').attr('href', '/products/' + (p.intermediaryCode || p.id) + '/edit').show();
+                }
+
+                // Show hidden button if bought (logic check via API later or simple check here)
+                // Actually, let's just Try to fetch Hidden Content if we suspect they might have access
+                // Or just show the button if they are Authenticated?
+                // Better: Just show "View Hidden Content" button if Auth?
+                // If they click and fail, show toast.
+
+                // If SOLD or Active?
+                if (p.status === 'SOLD' && currentUserId && currentUserId !== p.seller.id) {
+                     $('#viewHiddenBtn').show();
+                     $('#buyBtn').prop('disabled', true).text('Đã bán');
+                }
+
+                if (p.status === 'SOLD' && (!currentUserId || (p.buyer && currentUserId !== p.buyer.id))) {
+                      $('#buyBtn').prop('disabled', true).text('Đã bán');
+                }
+
+            }).fail(function() {
+                showToast('Không tìm thấy sản phẩm', 'error');
+            });
+        }
+
+        function copyLink() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                showToast('Đã sao chép liên kết!', 'success');
+            });
+        }
+
+        function toggleHidden() {
+            if ($('#hiddenContentSection').is(':visible')) {
+                $('#hiddenContentSection').hide();
+                return;
+            }
+
+            // Use product.id (Long) instead of productId (String/Code)
+            if (!product || !product.id) {
+                 showToast('Đang tải sản phẩm...', 'warning');
+                 return;
+            }
+
+            $.get('/api/products/' + product.id + '/hidden', function(content) {
+                $('#hiddenContent').text(content);
+                $('#hiddenContentSection').show();
+            }).fail(function(xhr) {
+                showToast(xhr.responseText || 'Bạn chưa mua sản phẩm này', 'error');
+            });
+        }
+
+        function openBuyModal() {
+            $('#modalProductName').text(product.topic);
+            const price = typeof product.price === 'object' ? parseFloat(product.price) : parseFloat(product.price);
+            const fee = product.feeBearer === 'BUYER' ? price * 0.05 : 0;
+            const total = price + fee;
+            $('#modalTotal').text(formatVND(total) + ' VND');
+
+            // Get balance
+            $.get('/api/wallet/balance', function(wallet) {
+                const balance = typeof wallet.balance === 'object' ? parseFloat(wallet.balance) : parseFloat(wallet.balance);
+                $('#modalBalance').text(formatVND(balance) + ' VND');
+
+                if (balance < total) {
+                    $('#confirmBuyBtn').prop('disabled', true).text('Số dư không đủ');
+                }
+            });
+
+            new bootstrap.Modal(document.getElementById('buyModal')).show();
+        }
+
+        function confirmBuy() {
+            $('#confirmBuyBtn').prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>Đang xử lý...');
+
+            // Use product.id (Long) instead of productId (String/Code)
+            if (!product || !product.id) return;
+
+            $.post('/api/transactions/buy/' + product.id, function(tx) {
+                showToast('Mua hàng thành công!', 'success');
+                setTimeout(() => {
+                    window.location.href = '/transactions';
+                }, 1500);
+            }).fail(function(xhr) {
+                showToast(xhr.responseText || 'Có lỗi xảy ra', 'error');
+                $('#confirmBuyBtn').prop('disabled', false).html('<i class="bi bi-check-lg me-2"></i>Xác nhận mua');
+            });
+        }
+      </script>
+    </div>
+  </body>
+</html>

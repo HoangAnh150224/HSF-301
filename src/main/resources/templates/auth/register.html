@@ -1,0 +1,122 @@
+<!doctype html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/main}"
+>
+  <head>
+    <title>Đăng ký - Digital Market</title>
+  </head>
+  <body>
+    <div layout:fragment="content">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body p-4">
+              <h3 class="card-title text-center mb-4">
+                <i class="bi bi-person-plus me-2 text-success"></i>Tạo tài khoản
+              </h3>
+
+              <!-- Error Message -->
+              <div th:if="${error}" class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <span th:text="${error}">Error</span>
+              </div>
+
+              <form th:action="@{/register}" method="post">
+                <div class="mb-3">
+                  <label for="username" class="form-label">Tên đăng nhập</label>
+                  <div class="input-group">
+                    <span class="input-group-text"
+                      ><i class="bi bi-person"></i
+                    ></span>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="username"
+                      name="username"
+                      placeholder="Chọn tên đăng nhập"
+                      required
+                      minlength="3"
+                      autofocus
+                    />
+                  </div>
+                  <div class="form-text">Tối thiểu 3 ký tự</div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="email" class="form-label">Email</label>
+                  <div class="input-group">
+                    <span class="input-group-text"
+                      ><i class="bi bi-envelope"></i
+                    ></span>
+                    <input
+                      type="email"
+                      class="form-control"
+                      id="email"
+                      name="email"
+                      placeholder="Nhập email của bạn"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="password" class="form-label">Mật khẩu</label>
+                  <div class="input-group">
+                    <span class="input-group-text"
+                      ><i class="bi bi-lock"></i
+                    ></span>
+                    <input
+                      type="password"
+                      class="form-control"
+                      id="password"
+                      name="password"
+                      placeholder="Tạo mật khẩu"
+                      required
+                      minlength="6"
+                    />
+                  </div>
+                  <div class="form-text">Tối thiểu 6 ký tự</div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="confirmPassword" class="form-label"
+                    >Xác nhận mật khẩu</label
+                  >
+                  <div class="input-group">
+                    <span class="input-group-text"
+                      ><i class="bi bi-lock-fill"></i
+                    ></span>
+                    <input
+                      type="password"
+                      class="form-control"
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      placeholder="Nhập lại mật khẩu"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div class="d-grid gap-2 mb-3">
+                  <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-check-circle me-2"></i>Đăng ký
+                  </button>
+                </div>
+              </form>
+
+              <hr />
+              <p class="text-center mb-0">
+                Đã có tài khoản?
+                <a th:href="@{/login}" class="text-decoration-none fw-bold"
+                  >Đăng nhập</a
+                >
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,144 @@
+<!doctype html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/main}"
+>
+  <head>
+    <title>Admin - Dispute Management</title>
+  </head>
+  <body>
+    <div layout:fragment="content">
+      <h2>Dispute Management</h2>
+      <p>Mock Admin Panel</p>
+
+      <div class="card">
+        <div class="card-body">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Dispute ID</th>
+                <th>Tx Code</th>
+                <th>Creator</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="disputeRows">
+              <!-- AJAX -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Resolve Modal -->
+      <div class="modal fade" id="resolveModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Resolve Dispute</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+            <div class="modal-body">
+              <input type="hidden" id="resolveId" />
+              <div class="mb-3">
+                <label class="form-label">Decision</label>
+                <select id="resolveDecision" class="form-select">
+                  <option value="RESOLVED_BUYER_WINS">
+                    Buyer Wins (Refund Buyer)
+                  </option>
+                  <option value="RESOLVED_SELLER_WINS">
+                    Seller Wins (Pay Seller)
+                  </option>
+                  <option value="RESOLVED_MUTUAL">Mutual/Cancel</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Admin Comment</label>
+                <textarea
+                  id="resolveComment"
+                  class="form-control"
+                  rows="3"
+                ></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-primary"
+                onclick="submitResolution()"
+              >
+                Submit Judgment
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div layout:fragment="scripts">
+      <script>
+        $(document).ready(function () {
+          loadDisputes();
+        });
+
+        function loadDisputes() {
+          // We need an endpoint to list all disputes.
+          // DisputeApiController doesn't seem to have listAll or listByStatus exposed clearly yet.
+          // Assuming we add it or just mock it.
+          // Let's assume we fetch `ALL` disputes.
+
+          // TODO: Add /api/disputes/list to Controller.
+          // For now, let's create a stub in script or assume logic exists.
+          // I will add the method to Controller immediately after this to ensure it works.
+          $.get("/api/disputes/list", function (list) {
+            let html = "";
+            list.forEach((d) => {
+              html += `
+                            <tr>
+                                <td>${d.id}</td>
+                                <td>${d.transaction.transactionCode.substring(0, 8)}...</td>
+                                <td>${d.creator.username || d.creator.id}</td>
+                                <td>${d.reason}</td>
+                                <td><span class="badge bg-warning">${d.status}</span></td>
+                                <td>
+                                    ${
+                                      d.status === "PENDING"
+                                        ? `<button class="btn btn-primary btn-sm" onclick="openResolve(${d.id})">Resolve</button>`
+                                        : ""
+                                    }
+                                </td>
+                            </tr>
+                         `;
+            });
+            $("#disputeRows").html(html);
+          });
+        }
+
+        function openResolve(id) {
+          $("#resolveId").val(id);
+          new bootstrap.Modal(document.getElementById("resolveModal")).show();
+        }
+
+        function submitResolution() {
+          const id = $("#resolveId").val();
+          const resolution = $("#resolveDecision").val();
+          const comment = $("#resolveComment").val();
+
+          $.post(
+            `/api/disputes/${id}/resolve?resolution=${resolution}&comment=${encodeURIComponent(comment)}`,
+            function () {
+              alert("Resolved!");
+              loadDisputes();
+            },
+          );
+        }
+      </script>
+    </div>
+  </body>
+</html>

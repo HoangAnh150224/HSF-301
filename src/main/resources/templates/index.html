@@ -1,0 +1,139 @@
+<!doctype html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+  layout:decorate="~{layout/main}"
+>
+  <head>
+    <title>Digital Market - Trang chủ</title>
+  </head>
+  <body>
+    <div layout:fragment="content">
+      <!-- Hero Section -->
+      <section class="hero-section text-center mb-5">
+        <div class="py-4">
+          <h1 class="display-4 fw-bold mb-3">
+            <i class="bi bi-shield-check me-2"></i>Giao dịch An toàn
+          </h1>
+          <p class="lead mb-4">
+            Hệ thống trung gian giao dịch tài nguyên số uy tín nhất Việt Nam
+          </p>
+          <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a th:href="@{/products}" class="btn btn-light btn-lg px-4">
+              <i class="bi bi-search me-2"></i>Khám phá
+            </a>
+            <a
+              th:href="@{/products/create}"
+              class="btn btn-outline-light btn-lg px-4"
+              sec:authorize="isAuthenticated()"
+            >
+              <i class="bi bi-plus-lg me-2"></i>Đăng bán
+            </a>
+            <a
+              th:href="@{/register}"
+              class="btn btn-outline-light btn-lg px-4"
+              sec:authorize="!isAuthenticated()"
+            >
+              <i class="bi bi-person-plus me-2"></i>Đăng ký ngay
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stats -->
+      <div class="row g-4 mb-5">
+        <div class="col-md-4">
+          <div class="card stats-card">
+            <i class="bi bi-people-fill text-primary"></i>
+            <h3>1,000+</h3>
+            <p class="text-muted mb-0">Người dùng tin tưởng</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card stats-card">
+            <i class="bi bi-bag-check-fill text-success"></i>
+            <h3>5,000+</h3>
+            <p class="text-muted mb-0">Giao dịch thành công</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card stats-card">
+            <i class="bi bi-shield-fill-check text-info"></i>
+            <h3>99.9%</h3>
+            <p class="text-muted mb-0">Tỷ lệ an toàn</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- How it works -->
+      <section class="mb-5">
+        <h2 class="text-center mb-4 fw-bold">Cách thức hoạt động</h2>
+        <div class="row g-4">
+          <div class="col-md-3 col-6">
+            <div class="text-center">
+              <div
+                class="rounded-circle bg-primary text-white rounded-circle-step mb-3 mx-auto"
+              >
+                <span class="fw-bold fs-4">1</span>
+              </div>
+              <h5>Đăng sản phẩm</h5>
+              <p class="text-muted small">
+                Người bán đăng tài nguyên số với phí 5,000đ
+              </p>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="text-center">
+              <div
+                class="rounded-circle bg-primary text-white rounded-circle-step mb-3 mx-auto"
+              >
+                <span class="fw-bold fs-4">2</span>
+              </div>
+              <h5>Thanh toán tạm giữ</h5>
+              <p class="text-muted small">
+                Người mua thanh toán, tiền được tạm giữ
+              </p>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="text-center">
+              <div
+                class="rounded-circle bg-primary text-white rounded-circle-step mb-3 mx-auto"
+              >
+                <span class="fw-bold fs-4">3</span>
+              </div>
+              <h5>Xác nhận nhận hàng</h5>
+              <p class="text-muted small">Người mua kiểm tra và xác nhận</p>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="text-center">
+              <div
+                class="rounded-circle bg-success text-white rounded-circle-step mb-3 mx-auto"
+              >
+                <i class="bi bi-check-lg fs-4"></i>
+              </div>
+              <h5>Hoàn tất</h5>
+              <p class="text-muted small">Tiền được chuyển cho người bán</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section
+        class="text-center py-5 bg-dark text-white"
+        style="border-radius: 16px"
+      >
+        <h3 class="mb-3">Sẵn sàng bắt đầu?</h3>
+        <p class="mb-4">
+          Tham gia cộng đồng giao dịch tài nguyên số an toàn nhất
+        </p>
+        <a th:href="@{/register}" class="btn btn-primary btn-lg"
+          >Tạo tài khoản miễn phí</a
+        >
+      </section>
+    </div>
+  </body>
+</html>

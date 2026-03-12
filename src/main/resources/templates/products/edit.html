@@ -1,0 +1,163 @@
+<!doctype html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  layout:decorate="~{layout/main}"
+>
+  <head>
+    <title>Chỉnh sửa sản phẩm - Digital Market</title>
+  </head>
+  <body>
+    <div layout:fragment="content">
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card">
+            <div class="card-header bg-white py-3">
+              <h4 class="mb-0">
+                <i class="bi bi-pencil-square me-2"></i>Chỉnh sửa sản phẩm
+              </h4>
+            </div>
+            <div class="card-body p-4">
+              <form id="editProductForm">
+                <div class="mb-4">
+                  <label class="form-label fw-bold"
+                    >Tiêu đề sản phẩm <span class="text-danger">*</span></label
+                  >
+                  <input
+                    type="text"
+                    id="topic"
+                    class="form-control form-control-lg"
+                    required
+                    maxlength="200"
+                  />
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label fw-bold"
+                    >Mô tả sản phẩm <span class="text-danger">*</span></label
+                  >
+                  <textarea
+                    id="description"
+                    class="form-control"
+                    rows="4"
+                    required
+                  ></textarea>
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label fw-bold">
+                    <i class="bi bi-lock me-1"></i>Nội dung ẩn
+                    <span class="text-danger">*</span>
+                  </label>
+                  <textarea
+                    id="hiddenContent"
+                    class="form-control"
+                    rows="4"
+                    required
+                  ></textarea>
+                </div>
+
+                <div class="row g-3 mb-4">
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold"
+                      >Giá bán (VND) <span class="text-danger">*</span></label
+                    >
+                    <div class="input-group input-group-lg">
+                      <input
+                        type="number"
+                        id="price"
+                        class="form-control"
+                        min="1000"
+                        required
+                      />
+                      <span class="input-group-text">VND</span>
+                    </div>
+                  </div>
+                  <!-- Fee Bearer cannot be changed easily without re-calc so let's keep it simple or allow change -->
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold">Chế độ hiển thị</label>
+                    <select id="visibility" class="form-select">
+                      <option value="PUBLIC">Công khai</option>
+                      <option value="PRIVATE">Riêng tư</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label fw-bold">Thông tin liên hệ</label>
+                  <input type="text" id="contactMethod" class="form-control" />
+                </div>
+
+                <button
+                  type="submit"
+                  class="btn btn-primary btn-lg w-100"
+                  id="submitBtn"
+                >
+                  <i class="bi bi-save me-2"></i>Lưu thay đổi
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div layout:fragment="scripts">
+      <script th:inline="javascript">
+        const productId = [[${productId}]];
+
+        $(document).ready(function() {
+            // Load Product
+            $.get('/api/products/' + productId, function(p) {
+                if (p.status !== 'ACTIVE') {
+                    alert('Không thể chỉnh sửa sản phẩm đã bán hoặc bị khóa');
+                    window.location.href = '/products/' + (p.intermediaryCode || p.id);
+                    return;
+                }
+
+                $('#topic').val(p.topic);
+                $('#description').val(p.description);
+                $('#hiddenContent').val(p.hiddenContent); // Owner can see
+                $('#price').val(p.price);
+                $('#visibility').val(p.visibility || 'PUBLIC');
+                $('#contactMethod').val(p.contactMethod);
+
+                // Set form submission to use the REAL ID (p.id) for the API call
+                $('#editProductForm').off('submit').on('submit', function(e) {
+                    e.preventDefault();
+
+                    const updatedProduct = {
+                        topic: $('#topic').val(),
+                        description: $('#description').val(),
+                        price: parseFloat($('#price').val()),
+                        hiddenContent: $('#hiddenContent').val(),
+                        visibility: $('#visibility').val(),
+                        contactMethod: $('#contactMethod').val()
+                    };
+
+                    $("#submitBtn").prop("disabled", true).html('<i class="bi bi-hourglass-split me-2"></i>Đang lưu...');
+
+                    $.ajax({
+                        url: '/api/products/' + p.id, // Use numeric ID for PUT
+                        type: 'PUT',
+                        contentType: 'application/json',
+                        data: JSON.stringify(updatedProduct),
+                        success: function() {
+                            showToast('Cập nhật thành công!', 'success');
+                            setTimeout(() => window.location.href = '/products/' + (p.intermediaryCode || p.id), 1500);
+                        },
+                        error: function(xhr) {
+                            showToast('Lỗi: ' + (xhr.responseJSON?.message || 'Cập nhật thất bại'), 'error');
+                            $("#submitBtn").prop("disabled", false).html('<i class="bi bi-save me-2"></i>Lưu thay đổi');
+                        }
+                    });
+                });
+
+            }).fail(function() {
+                showToast('Không tải được thông tin sản phẩm', 'error');
+            });
+        });
+      </script>
+    </div>
+  </body>
+</html>
