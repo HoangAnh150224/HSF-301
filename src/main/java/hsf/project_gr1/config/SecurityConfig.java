@@ -49,20 +49,33 @@ public class SecurityConfig {
                 // Secure Product Create/Edit
                 .requestMatchers("/products/create").authenticated()
                 .requestMatchers("/products/*/edit").authenticated()
-                
-                // Allow Public Product View
+
+                    // Allow Public Product View
                 .requestMatchers("/products", "/products/**").permitAll()
                 
+
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/payment/payos-hook").permitAll() // PayOS webhook
+                    .requestMatchers("/api/wallet/withdraw").authenticated()
+                    .requestMatchers("/api/payment/payos-hook").permitAll() // PayOS webhook
                 .requestMatchers("/api/products", "/api/products/**").permitAll() // Allow public to view products
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                    .requestMatchers("/api/wallet/withdraw/viewall").hasRole("ADMIN")
+                    .requestMatchers("/api/wallet/withdraw/export").hasRole("ADMIN")
+                    .requestMatchers("/api/wallet/withdraw").authenticated()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
-                .defaultSuccessUrl("/", true)
+                    .successHandler((request, response, authentication) -> {
+                        boolean isAdmin = authentication.getAuthorities().stream()
+                                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                        if (isAdmin) {
+                            response.sendRedirect("/admin/disputes");
+                        } else {
+                            response.sendRedirect("/");
+                        }
+                    })
                 .failureUrl("/login?error=true")
                 .permitAll()
             )

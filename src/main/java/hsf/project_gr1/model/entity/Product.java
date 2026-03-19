@@ -51,7 +51,7 @@ public class Product {
 
     private String contactMethod;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String hiddenContent;           // Nội dung chỉ hiện sau khi thanh toán
 
     @Enumerated(EnumType.STRING)
