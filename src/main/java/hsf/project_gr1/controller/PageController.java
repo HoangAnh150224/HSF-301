@@ -1,11 +1,16 @@
 package hsf.project_gr1.controller;
 
+import hsf.project_gr1.model.entity.Product;
+import hsf.project_gr1.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/")
@@ -15,8 +20,19 @@ public class PageController {
     private final hsf.project_gr1.service.ProductService productService;
 
     @GetMapping
-    public String home() {
-        return "index"; // landing page
+    public String home(
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        if (userDetails != null) {
+            boolean isAdmin = userDetails.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+            if (isAdmin) {
+                return "redirect:/admin/disputes";
+            }
+        }
+
+        return "index";
     }
 
     @GetMapping("/products")
@@ -70,7 +86,7 @@ public class PageController {
                               @org.springframework.security.core.annotation.AuthenticationPrincipal hsf.project_gr1.security.CustomUserDetails userDetails) {
         
         // 1. Resolve Product
-        java.util.Optional<hsf.project_gr1.model.entity.Product> productOpt = java.util.Optional.empty();
+        Optional<Product> productOpt;
         try {
             Long id = Long.parseLong(identifier);
             productOpt = productService.getProductById(id);
@@ -118,4 +134,5 @@ public class PageController {
     public String transactions() {
         return "transactions/history";
     }
+
 }

@@ -50,4 +50,8 @@ public class WalletTransaction {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+    @ManyToOne
+    @JoinColumn(name = "withdrawal_id")
+    private Withdrawal withdrawal;
+
 }
