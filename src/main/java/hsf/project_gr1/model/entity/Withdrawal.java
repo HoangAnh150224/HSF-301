@@ -51,5 +51,6 @@ public class Withdrawal {
         this.createdAt = LocalDateTime.now();
         this.status = "PENDING";
     }
-
+    @OneToOne(mappedBy = "withdrawal")
+    private WalletTransaction walletTransaction;
 }

@@ -3,6 +3,7 @@ package hsf.project_gr1.service.impl;
 import hsf.project_gr1.model.entity.User;
 import hsf.project_gr1.model.entity.Wallet;
 import hsf.project_gr1.model.entity.WalletTransaction;
+import hsf.project_gr1.model.entity.Withdrawal;
 import hsf.project_gr1.model.enums.WalletTransactionStatus;
 import hsf.project_gr1.model.enums.WalletTransactionType;
 import hsf.project_gr1.repository.UserRepository;
@@ -93,5 +94,16 @@ public class WalletServiceImpl implements WalletService {
                 .status(status)
                 .build();
         transactionRepository.save(transaction);
+    }
+    @Override
+    @jakarta.transaction.Transactional
+    public void linkWithdrawalToLastTransaction(Long userId, Withdrawal withdrawal) {
+        Wallet wallet = getByUserId(userId);
+        WalletTransaction tx = transactionRepository
+                .findTopByWalletIdAndTypeOrderByCreatedAtDesc(
+                        wallet.getId(), WalletTransactionType.WITHDRAW)
+                .orElseThrow(() -> new RuntimeException("Transaction not found"));
+        tx.setWithdrawal(withdrawal);
+        transactionRepository.save(tx);
     }
 }

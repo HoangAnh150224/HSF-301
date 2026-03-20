@@ -1,6 +1,7 @@
 package hsf.project_gr1.repository;
 
 import hsf.project_gr1.model.entity.WalletTransaction;
+import hsf.project_gr1.model.enums.WalletTransactionType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,4 +13,6 @@ public interface WalletTransactionRepository extends JpaRepository<WalletTransac
     List<WalletTransaction> findByWalletId(Long walletId);
     List<WalletTransaction> findByTransactionCode(String transactionCode);
     Optional<WalletTransaction> findByPaymentTransactionId(String paymentTransactionId);
+    Optional<WalletTransaction> findTopByWalletIdAndTypeOrderByCreatedAtDesc(
+            Long walletId, WalletTransactionType type);
 }

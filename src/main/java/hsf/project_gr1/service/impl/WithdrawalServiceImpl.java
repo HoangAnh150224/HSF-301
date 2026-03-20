@@ -2,7 +2,9 @@ package hsf.project_gr1.service.impl;
 
 import hsf.project_gr1.model.entity.User;
 import hsf.project_gr1.model.entity.Wallet;
+import hsf.project_gr1.model.entity.WalletTransaction;
 import hsf.project_gr1.model.entity.Withdrawal;
+import hsf.project_gr1.model.enums.WalletTransactionType;
 import hsf.project_gr1.repository.UserRepository;
 import hsf.project_gr1.repository.WithdrawalRepository;
 import hsf.project_gr1.service.WalletService;
@@ -47,8 +49,8 @@ public class WithdrawalServiceImpl implements WithdrawalService {
         withdrawal.setBankName(bankName);
         withdrawal.setBankAccount(bankAccount);
         withdrawal.setAccountName(accountName);
-
         withdrawalRepository.save(withdrawal);
+        walletService.linkWithdrawalToLastTransaction(userId, withdrawal);
     }
 
     public List<Withdrawal> getWithdrawalsByUserId(Long userId) {
