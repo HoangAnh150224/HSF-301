@@ -1,0 +1,173 @@
+<!doctype html>
+<html
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+        xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+        layout:decorate="~{layout/main}"
+>
+<head>
+    <title>Rut tien - Digital Market</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h2 class="mb-4"><i class="bi bi-cash-stack me-2"></i>Rut tien</h2>
+
+    <!-- Flash Messages -->
+    <div th:if="${successMessage}" class="alert alert-success fade-in">
+        <i class="bi bi-check-circle me-2"></i>
+        <span th:text="${successMessage}"></span>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger fade-in">
+        <i class="bi bi-x-circle me-2"></i>
+        <span th:text="${errorMessage}"></span>
+    </div>
+
+    <div class="row g-4">
+        <!-- Balance Card -->
+        <div class="col-md-6">
+            <div class="card balance-card">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="mb-1 opacity-75">So du kha dung</p>
+                            <h2 class="display-5 fw-bold mb-0"
+                                th:text="${#numbers.formatDecimal(balance, 0, 'COMMA', 0, 'POINT')}">0</h2>
+                            <p class="mb-0">VND</p>
+                        </div>
+                        <i class="bi bi-wallet-fill display-4 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Withdraw Form Card -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cash-stack me-2"></i>Thong tin rut tien
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/api/wallet/withdraw}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">So tien (VND)</label>
+                            <input
+                                    type="number"
+                                    name="amount"
+                                    id="withdrawAmount"
+                                    class="form-control form-control-lg"
+                                    placeholder="Nhap so tien"
+                                    min="10000"
+                                    step="10000"
+                                    required
+                            />
+                            <div class="form-text">Toi thieu 10,000 VND</div>
+                        </div>
+
+                        <div class="d-flex gap-2 mb-3">
+                            <button type="button" class="btn btn-outline-secondary flex-fill" onclick="setAmount(10000)">10K</button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill" onclick="setAmount(20000)">20K</button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill" onclick="setAmount(50000)">50K</button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill" onclick="setAmount(100000)">100K</button>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Ten ngan hang</label>
+                            <input
+                                    type="text"
+                                    name="bankName"
+                                    class="form-control"
+                                    placeholder="VD: Vietcombank, BIDV, Techcombank..."
+                                    required
+                            />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">So tai khoan</label>
+                            <input
+                                    type="text"
+                                    name="bankAccount"
+                                    class="form-control"
+                                    placeholder="Nhap so tai khoan"
+                                    required
+                            />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Ten chu tai khoan</label>
+                            <input
+                                    type="text"
+                                    name="accountName"
+                                    class="form-control"
+                                    placeholder="Nhap ten chu tai khoan"
+                                    required
+                            />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 btn-lg">
+                            <i class="bi bi-send me-2"></i>Gui yeu cau rut tien
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Withdraw History -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-clock-history me-2"></i>Lich su rut tien
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>Ma GD</th>
+                        <th>So tien</th>
+                        <th>Ngan hang</th>
+                        <th>So tai khoan</th>
+                        <th>Trang thai</th>
+                        <th>Thoi gian</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(withdrawals)}">
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox display-6"></i>
+                            <p class="mb-0 mt-2">Chua co yeu cau rut tien nao</p>
+                        </td>
+                    </tr>
+                    <tr th:each="w : ${withdrawals}">
+                        <td><code th:text="'#' + ${w.id}"></code></td>
+                        <td class="fw-bold text-danger"
+                            th:text="'-' + ${#numbers.formatDecimal(w.amount, 0, 'COMMA', 0, 'POINT')} + ' VND'"></td>
+                        <td th:text="${w.bankName}"></td>
+                        <td th:text="${w.bankAccount}"></td>
+                        <td>
+                    <span th:classappend="${w.status == 'PENDING' ? 'bg-warning' : (w.status == 'APPROVED' ? 'bg-success' : 'bg-danger')}"
+                          class="badge"
+                          th:text="${w.status == 'PENDING' ? 'PENDING' : 'APPROVED'}">
+                    </span>
+                        </td>
+                        <td th:text="${#temporals.format(w.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div layout:fragment="scripts">
+    <script>
+        function setAmount(amount) {
+            document.getElementById("withdrawAmount").value = amount;
+        }
+    </script>
+</div>
+</body>
+</html>
