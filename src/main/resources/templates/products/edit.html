@@ -88,6 +88,39 @@
                   <input type="text" id="contactMethod" class="form-control" />
                 </div>
 
+                <!-- Image Management -->
+                <div class="mb-4">
+                  <label class="form-label fw-bold">
+                    <i class="bi bi-image me-1"></i>Ảnh mô tả sản phẩm
+                  </label>
+
+                  <!-- Existing images -->
+                  <div id="existingImagesContainer" class="row g-2 mb-3"></div>
+
+                  <!-- Upload new -->
+                  <div
+                    id="imageDropZone"
+                    class="border border-2 border-dashed rounded p-3 text-center"
+                    style="cursor: pointer; border-color: #dee2e6 !important;"
+                    onclick="document.getElementById('imageUploadInput').click()"
+                    ondragover="event.preventDefault(); this.classList.add('border-primary')"
+                    ondragleave="this.classList.remove('border-primary')"
+                    ondrop="handleImageDrop(event)"
+                  >
+                    <i class="bi bi-plus-circle text-muted fs-4"></i>
+                    <p class="mb-0 mt-1 text-muted small">Thêm ảnh mới (PNG, JPG, GIF tối đa 5MB)</p>
+                  </div>
+                  <input
+                    type="file"
+                    id="imageUploadInput"
+                    accept="image/*"
+                    multiple
+                    style="display: none"
+                    onchange="handleImageSelect(event)"
+                  />
+                  <div id="newImagePreviewContainer" class="row g-2 mt-2"></div>
+                </div>
+
                 <button
                   type="submit"
                   class="btn btn-primary btn-lg w-100"
@@ -105,6 +138,8 @@
     <div layout:fragment="scripts">
       <script th:inline="javascript">
         const productId = [[${productId}]];
+        let pendingImages = [];
+        let realProductId = null;
 
         $(document).ready(function() {
             // Load Product
@@ -115,15 +150,19 @@
                     return;
                 }
 
+                realProductId = p.id;
                 $('#topic').val(p.topic);
                 $('#description').val(p.description);
-                $('#hiddenContent').val(p.hiddenContent); // Owner can see
+                $('#hiddenContent').val(p.hiddenContent);
                 $('#price').val(p.price);
                 $('#visibility').val(p.visibility || 'PUBLIC');
                 $('#contactMethod').val(p.contactMethod);
 
-                // Set form submission to use the REAL ID (p.id) for the API call
-                $('#editProductForm').off('submit').on('submit', function(e) {
+                // Load existing images
+                loadExistingImages(p.id);
+
+                // Set form submission
+                $('#editProductForm').off('submit').on('submit', async function(e) {
                     e.preventDefault();
 
                     const updatedProduct = {
@@ -137,26 +176,103 @@
 
                     $("#submitBtn").prop("disabled", true).html('<i class="bi bi-hourglass-split me-2"></i>Đang lưu...');
 
-                    $.ajax({
-                        url: '/api/products/' + p.id, // Use numeric ID for PUT
-                        type: 'PUT',
-                        contentType: 'application/json',
-                        data: JSON.stringify(updatedProduct),
-                        success: function() {
-                            showToast('Cập nhật thành công!', 'success');
-                            setTimeout(() => window.location.href = '/products/' + (p.intermediaryCode || p.id), 1500);
-                        },
-                        error: function(xhr) {
-                            showToast('Lỗi: ' + (xhr.responseJSON?.message || 'Cập nhật thất bại'), 'error');
-                            $("#submitBtn").prop("disabled", false).html('<i class="bi bi-save me-2"></i>Lưu thay đổi');
+                    try {
+                        await $.ajax({
+                            url: '/api/products/' + p.id,
+                            type: 'PUT',
+                            contentType: 'application/json',
+                            data: JSON.stringify(updatedProduct)
+                        });
+
+                        // Upload pending images
+                        const files = pendingImages.filter(f => f !== null);
+                        for (const file of files) {
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            await $.ajax({
+                                url: '/api/products/' + p.id + '/images',
+                                method: 'POST',
+                                data: formData,
+                                processData: false,
+                                contentType: false
+                            });
                         }
-                    });
+
+                        showToast('Cập nhật thành công!', 'success');
+                        setTimeout(() => window.location.href = '/products/' + (p.intermediaryCode || p.id), 1500);
+                    } catch(xhr) {
+                        showToast('Lỗi: ' + (xhr.responseJSON?.message || xhr.responseText || 'Cập nhật thất bại'), 'error');
+                        $("#submitBtn").prop("disabled", false).html('<i class="bi bi-save me-2"></i>Lưu thay đổi');
+                    }
                 });
 
             }).fail(function() {
                 showToast('Không tải được thông tin sản phẩm', 'error');
             });
         });
+
+        function loadExistingImages(pid) {
+            $.get('/api/products/' + pid + '/images', function(images) {
+                const container = $('#existingImagesContainer');
+                container.empty();
+                if (images.length === 0) return;
+                images.forEach(function(img) {
+                    const col = $('<div class="col-4 col-md-3 position-relative">');
+                    const image = $('<img class="img-thumbnail w-100" style="height:100px; object-fit:cover;">').attr('src', img.fileUrl);
+                    const btn = $('<button type="button" class="btn btn-danger btn-sm position-absolute" style="top:4px;right:8px;padding:1px 6px;" title="Xóa ảnh">').html('&times;').on('click', function() {
+                        if (!confirm('Xóa ảnh này?')) return;
+                        $.ajax({
+                            url: '/api/products/' + pid + '/images/' + img.id,
+                            method: 'DELETE',
+                            success: function() {
+                                col.remove();
+                                showToast('Đã xóa ảnh', 'success');
+                            },
+                            error: function() {
+                                showToast('Không thể xóa ảnh', 'error');
+                            }
+                        });
+                    });
+                    col.append(image).append(btn);
+                    container.append(col);
+                });
+            });
+        }
+
+        function handleImageSelect(event) {
+            const files = Array.from(event.target.files);
+            files.forEach(addImagePreview);
+            event.target.value = '';
+        }
+
+        function handleImageDrop(event) {
+            event.preventDefault();
+            document.getElementById('imageDropZone').classList.remove('border-primary');
+            const files = Array.from(event.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+            files.forEach(addImagePreview);
+        }
+
+        function addImagePreview(file) {
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('Ảnh "' + file.name + '" vượt quá 5MB', 'error');
+                return;
+            }
+            pendingImages.push(file);
+            const idx = pendingImages.length - 1;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const col = $('<div class="col-4 col-md-3 position-relative">');
+                const img = $('<img class="img-thumbnail w-100" style="height:100px; object-fit:cover;">').attr('src', e.target.result);
+                const label = $('<span class="badge bg-info position-absolute" style="top:4px;left:8px;font-size:10px;">Mới</span>');
+                const btn = $('<button type="button" class="btn btn-danger btn-sm position-absolute" style="top:4px;right:8px;padding:1px 6px;">').html('&times;').on('click', function() {
+                    pendingImages[idx] = null;
+                    col.remove();
+                });
+                col.append(img).append(label).append(btn);
+                $('#newImagePreviewContainer').append(col);
+            };
+            reader.readAsDataURL(file);
+        }
       </script>
     </div>
   </body>

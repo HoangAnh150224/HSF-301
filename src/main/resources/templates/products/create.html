@@ -59,6 +59,38 @@
 
                 <div class="mb-4">
                   <label class="form-label fw-bold">
+                    <i class="bi bi-image me-1"></i>Ảnh mô tả sản phẩm
+                    <span class="text-muted fw-normal">(Tùy chọn)</span>
+                  </label>
+                  <div
+                    id="imageDropZone"
+                    class="border border-2 border-dashed rounded p-4 text-center"
+                    style="cursor: pointer; border-color: #dee2e6 !important;"
+                    onclick="document.getElementById('imageUploadInput').click()"
+                    ondragover="event.preventDefault(); this.classList.add('border-primary')"
+                    ondragleave="this.classList.remove('border-primary')"
+                    ondrop="handleImageDrop(event)"
+                  >
+                    <i class="bi bi-cloud-upload fs-2 text-muted"></i>
+                    <p class="mb-1 mt-2 text-muted">Kéo thả ảnh vào đây hoặc click để chọn</p>
+                    <small class="text-muted">PNG, JPG, GIF tối đa 5MB mỗi ảnh</small>
+                  </div>
+                  <input
+                    type="file"
+                    id="imageUploadInput"
+                    accept="image/*"
+                    multiple
+                    style="display: none"
+                    onchange="handleImageSelect(event)"
+                  />
+                  <div id="imagePreviewContainer" class="row g-2 mt-2" style="display: none !important;"></div>
+                  <div class="form-text">
+                    Ảnh sẽ được tải lên sau khi đăng sản phẩm thành công
+                  </div>
+                </div>
+
+                <div class="mb-4">
+                  <label class="form-label fw-bold">
                     <i class="bi bi-lock me-1"></i>Nội dung ẩn
                     <span class="text-danger">*</span>
                   </label>
@@ -171,6 +203,8 @@
 
     <div layout:fragment="scripts">
       <script>
+        let pendingImages = []; // Files chờ upload sau khi tạo sản phẩm
+
         $("#price, #feeBearer").on("input change", function () {
           updatePreview();
         });
@@ -192,6 +226,58 @@
 
           $("#previewPrice").text(formatVND(price) + " VND");
           $("#previewNet").text(formatVND(Math.max(0, net)) + " VND");
+        }
+
+        function handleImageSelect(event) {
+          const files = Array.from(event.target.files);
+          files.forEach(addImagePreview);
+          event.target.value = '';
+        }
+
+        function handleImageDrop(event) {
+          event.preventDefault();
+          document.getElementById('imageDropZone').classList.remove('border-primary');
+          const files = Array.from(event.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+          files.forEach(addImagePreview);
+        }
+
+        function addImagePreview(file) {
+          if (file.size > 5 * 1024 * 1024) {
+            showToast('Ảnh "' + file.name + '" vượt quá 5MB', 'error');
+            return;
+          }
+          pendingImages.push(file);
+          const idx = pendingImages.length - 1;
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const col = $('<div class="col-4 col-md-3 position-relative">');
+            const img = $('<img class="img-thumbnail w-100" style="height:100px; object-fit:cover;">').attr('src', e.target.result);
+            const btn = $('<button type="button" class="btn btn-danger btn-sm position-absolute" style="top:4px;right:8px;padding:1px 6px;">').html('&times;').on('click', function() {
+              pendingImages[idx] = null;
+              col.remove();
+              if (pendingImages.every(f => f === null)) {
+                $('#imagePreviewContainer').hide();
+              }
+            });
+            col.append(img).append(btn);
+            $('#imagePreviewContainer').append(col).show();
+          };
+          reader.readAsDataURL(file);
+        }
+
+        async function uploadPendingImages(productId) {
+          const files = pendingImages.filter(f => f !== null);
+          for (const file of files) {
+            const formData = new FormData();
+            formData.append('file', file);
+            await $.ajax({
+              url: '/api/products/' + productId + '/images',
+              method: 'POST',
+              data: formData,
+              processData: false,
+              contentType: false
+            });
+          }
         }
 
         $("#createProductForm").submit(function (e) {
@@ -216,7 +302,15 @@
             method: "POST",
             contentType: "application/json",
             data: JSON.stringify(data),
-            success: function (product) {
+            success: async function (product) {
+              const files = pendingImages.filter(f => f !== null);
+              if (files.length > 0) {
+                try {
+                  await uploadPendingImages(product.id);
+                } catch (err) {
+                  showToast("Đăng sản phẩm thành công nhưng có lỗi khi upload ảnh", "warning");
+                }
+              }
               showToast("Đăng sản phẩm thành công!", "success");
               setTimeout(() => {
                 window.location.href = "/products/" + product.id;

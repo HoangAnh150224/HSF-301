@@ -53,7 +53,9 @@
 
               <div class="mb-4">
                 <h5 class="text-muted mb-2">Mô tả sản phẩm</h5>
-                <p id="productDescription" class="mb-0">---</p>
+                <p id="productDescription" class="mb-3">---</p>
+                <!-- Product Images -->
+                <div id="productImagesContainer" class="row g-2" style="display: none;"></div>
               </div>
 
               <!-- Hidden Content (shown via button) -->
@@ -222,6 +224,24 @@
                 $('#productCode').text('#' + (p.intermediaryCode || p.id));
                 $('#productTopic').text(p.topic);
                 $('#productDescription').text(p.description);
+
+                // Load product images
+                $.get('/api/products/' + p.id + '/images', function(images) {
+                    if (images && images.length > 0) {
+                        const container = $('#productImagesContainer');
+                        container.empty();
+                        images.forEach(function(img) {
+                            const col = $('<div class="col-6 col-md-4">');
+                            const link = $('<a target="_blank">').attr('href', img.fileUrl);
+                            const image = $('<img class="img-fluid rounded" style="max-height:200px; width:100%; object-fit:cover; cursor:zoom-in;">').attr('src', img.fileUrl).attr('alt', img.fileName);
+                            link.append(image);
+                            col.append(link);
+                            container.append(col);
+                        });
+                        container.show();
+                    }
+                });
+
                 $('#productPrice').text(formatVND(p.price));
                 $('#basePrice').text(formatVND(p.price) + ' VND');
                 $('#sellerName').text(p.seller?.username || 'Unknown');
